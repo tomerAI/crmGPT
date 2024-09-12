@@ -7,21 +7,14 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Retrieve MongoDB credentials from environment variables
-username = os.getenv("MONGODB_USERNAME")
-password = os.getenv("MONGODB_PASSWORD")
-cluster = os.getenv("MONGODB_CLUSTER")
-database_name = os.getenv("MONGODB_DATABASE")
-
-
 app = Flask(__name__)
 
 def get_db_connection():
     conn = psycopg2.connect(
         host="localhost",
-        database="test_db",
-        user="postgres",
-        password="test123"
+        database="your_database",
+        user="your_username",
+        password="your_password"
     )
     return conn
 
@@ -29,7 +22,7 @@ def get_db_connection():
 def get_data():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM public.supplier LIMIT 10;')
+    cursor.execute('SELECT * FROM your_table;')
     data = cursor.fetchall()
     cursor.close()
     conn.close()
