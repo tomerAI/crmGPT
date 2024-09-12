@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import psycopg2  # or any other DB connector for your DB
 from dotenv import load_dotenv
+import os
 
 
 # set API keys for OpenAI (the LLM we will use) and Tavily (the search tool we will use)
@@ -8,20 +9,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Retrieve MongoDB credentials from environment variables
-username = os.getenv("MONGODB_USERNAME")
-password = os.getenv("MONGODB_PASSWORD")
-cluster = os.getenv("MONGODB_CLUSTER")
-database_name = os.getenv("MONGODB_DATABASE")
+db_host = os.getenv("db_host")
+db_database = os.getenv("db_database")
+db_user = os.getenv("db_user")
+db_password = os.getenv("db_password")
 
 
 app = Flask(__name__)
 
 def get_db_connection():
     conn = psycopg2.connect(
-        host="localhost",
-        database="test_db",
-        user="postgres",
-        password="test123"
+        host=db_host,
+        database=db_database,
+        user=db_user,
+        password=db_password
     )
     return conn
 
