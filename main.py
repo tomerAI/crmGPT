@@ -32,6 +32,10 @@ def get_data():
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM public.supplier LIMIT 10;')
     data = cursor.fetchall()
+    # Print the selected data in the terminal
+    print("Selected Data:")
+    for row in data:
+        print(row)
     cursor.close()
     conn.close()
     return jsonify(data)
