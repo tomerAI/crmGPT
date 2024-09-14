@@ -1,20 +1,25 @@
 from flask import Flask, jsonify, request
 import psycopg2  # or any other DB connector for your DB
 from dotenv import load_dotenv
+import os
 
-
-# set API keys for OpenAI (the LLM we will use) and Tavily (the search tool we will use)
 # Load environment variables from .env file
 load_dotenv()
+
+# Retrieve DB credentials from environment variables
+db_host = os.getenv("db_host")
+db_database = os.getenv("db_database")
+db_user = os.getenv("db_user")
+db_password = os.getenv("db_password")
 
 app = Flask(__name__)
 
 def get_db_connection():
     conn = psycopg2.connect(
-        host="localhost",
-        database="your_database",
-        user="your_username",
-        password="your_password"
+        host=db_host,
+        database=db_database,
+        user=db_user,
+        password=db_password
     )
     return conn
 
@@ -22,7 +27,7 @@ def get_db_connection():
 def get_data():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM your_table;')
+    cursor.execute('SELECT * FROM public.supplier LIMIT 10;')
     data = cursor.fetchall()
     cursor.close()
     conn.close()
