@@ -13,7 +13,6 @@ class PostgreSQLChain:
         """Build the PostgreSQL query execution graph by adding nodes and edges."""
 
         # Add nodes using agent methods
-        self.sql_graph.add_node("MetadataAgent", self.agents.metadata_agent())
         self.sql_graph.add_node("SQLCreationAgent", self.agents.sql_creation_agent())
         self.sql_graph.add_node("SQLReviewAgent", self.agents.sql_review_agent())
         self.sql_graph.add_node("SQLExecutionAgent", self.agents.sql_execution_agent())
@@ -30,8 +29,7 @@ class PostgreSQLChain:
         )
         
         # Manual graph construction
-        self.sql_graph.add_edge(START, "MetadataAgent")
-        self.sql_graph.add_edge("MetadataAgent", "SQLCreationAgent")
+        self.sql_graph.add_edge(START, "SQLCreationAgent")
         self.sql_graph.add_edge("SQLCreationAgent", "SQLReviewAgent")
         # Let supervisor decide the next step
         self.sql_graph.add_edge("SQLReviewAgent", "supervisor") 
@@ -43,19 +41,24 @@ class PostgreSQLChain:
         """Compile the PostgreSQL query execution chain from the constructed graph."""
         return self.sql_graph.compile()
 
-    def enter_chain(self, message: str, chain):
+    def enter_chain(self, message: str, chain, members):
         """Enter the compiled chain with the given query and return the final summary."""
         # Create a list of HumanMessage instances
         results = [HumanMessage(content=message)]
 
-        # Execute the chain by passing the messages to it
-        sql_chain = chain.invoke({"messages": results})
+        input_data = {
+            "messages": results,
+            "team_members": members
+        }
 
-        """# Assuming the chain returns a list of messages, get the summary output
+        # Execute the chain by passing the messages to it
+        sql_chain = chain.invoke(input_data)
+
+        # Assuming the chain returns a list of messages, get the summary output
         if "messages" in sql_chain and sql_chain["messages"]:
             final_summary = next((msg.content for msg in sql_chain["messages"] if msg.name == "OutputFormattingAgent"), "No summary generated.")
         else:
             final_summary = "No valid messages returned from the chain."
-        """
+        
         # Return the final summary as the output
-        return sql_chain
+        return final_summary

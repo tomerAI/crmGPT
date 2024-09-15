@@ -2,10 +2,10 @@ import functools
 from typing import List, TypedDict, Annotated
 from langchain_core.messages import BaseMessage
 from langchain_openai.chat_models import ChatOpenAI
-from utilities.helper import HelperUtilities
-from tools.tool_empty import EmptyTool
-from tools.tool_metadata import MetadataTool
-from tools.tool_sql import SQLTool
+from backend_py.utilities.helper import HelperUtilities
+from backend_py.tools.tool_empty import placeholder_tool
+from backend_py.tools.tool_metadata import fetch_metadata_as_yaml
+from backend_py.tools.tool_sql import execute_sql_query
 import operator
 
 class SQLTeamState(TypedDict):
@@ -18,35 +18,18 @@ class SQLTeam:
         self.llm = ChatOpenAI(model=model)
         self.utilities = HelperUtilities()
         self.tools = {
-            'metadata': MetadataTool(),
-            'sql': SQLTool(),
-            'placeholder': EmptyTool()
+            'metadata': fetch_metadata_as_yaml,
+            'sql': execute_sql_query,
+            'placeholder': placeholder_tool
         }
-
-    def metadata_agent(self):
-        """Creates an agent that retrieves metadata from a PostgreSQL database."""
-        system_prompt = (
-            """
-            Your task is to retrieve and return metadata from the PostgreSQL database. 
-            Use the provided tools to gather information about tables, columns, data types, and indexes specific to PostgreSQL.
-            """
-        )
-
-        metadata_agent = self.utilities.create_agent(
-            self.llm,
-            [self.tools['metadata']],
-            system_prompt
-
-        )
-        
-        return functools.partial(self.utilities.agent_node, agent=metadata_agent, name="MetadataAgent")
 
     def sql_creation_agent(self):
         """Creates an agent that generates a PostgreSQL query based on user input and metadata."""
         
         system_prompt = (
             """
-            Your task is to create PostgreSQL queries based on the user's request. 
+            Your task is to create PostgreSQL queries based on the user's request and the metadata of the database. 
+            Use your 'metadata' tool to gather metadata of the database and generate PostgreSQL queries that meet the user's requirements.
             Ensure the SQL code aligns with the PostgreSQL database schema and the user’s intent.
             Consider any PostgreSQL-specific functions or optimizations that could be applied.
             """
@@ -54,7 +37,7 @@ class SQLTeam:
         
         sql_creation_agent = self.utilities.create_agent(
             self.llm,
-            [self.tools['placeholder']],
+            [self.tools['metadata']],
             system_prompt
         )
         return functools.partial(self.utilities.agent_node, agent=sql_creation_agent, name="SQLCreationAgent")

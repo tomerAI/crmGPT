@@ -5,7 +5,7 @@ class EmptyTool:
     def __init__(self):
         pass
 
-    @tool
-    def placeholder_tool() -> str:
-        """This is a placeholder tool that does nothing."""
-        return "No operation performed."
+@tool
+def placeholder_tool() -> str:
+    """This is a placeholder tool that does nothing."""
+    return "No operation performed."

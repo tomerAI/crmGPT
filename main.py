@@ -34,13 +34,13 @@ from backend_py.graphs.graph_sql import PostgreSQLChain
 def run_chain_sql(query, model):
     chain_sql = PostgreSQLChain(model)
 
-    members = ["MetadataAgent", "SQLCreationAgent", "SQLReviewAgent", "SQLExecutionAgent", "OutputFormattingAgent"]
-    chain_sql.build_graph(members=members)
+    members = ["SQLCreationAgent", "SQLReviewAgent", "SQLExecutionAgent", "OutputFormattingAgent"]
+    chain_sql.build_graph(members)
 
     compiled_chain = chain_sql.compile_chain()
 
     # Enter the chain with a query
-    output = chain_sql.enter_chain(query, compiled_chain)
+    output = chain_sql.enter_chain(query, compiled_chain, members)
 
     return output
 
