@@ -29,16 +29,34 @@ os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = "crmGPT"
 
 
-def run_chain_sql():
-    # Instantiate the team
-    team = SQLTeam("gpt-4")
-    metadata_node = team.metadata_agent()
-    sql_creation_node = team.sql_creation_agent()
-    sql_review_node = team.sql_review_agent()
-    sql_execution_node = team.sql_execution_agent()
-    output_node = team.output_agent()
-    supervisor = team.supervisor_agent(["MetadataAgent", "SQLCreationAgent", "SQLReviewAgent", "SQLExecutionAgent", "OutputAgent"])
+from backend_py.graphs.graph_sql import PostgreSQLChain
+
+def run_chain_sql(query, model):
+    chain_sql = PostgreSQLChain(model)
+
+    members = ["MetadataAgent", "SQLCreationAgent", "SQLReviewAgent", "SQLExecutionAgent", "OutputFormattingAgent"]
+    chain_sql.build_graph(members=members)
+
+    compiled_chain = chain_sql.compile_chain()
+
+    # Enter the chain with a query
+    output = chain_sql.enter_chain(query, compiled_chain)
+
+    return output
+
 
 
 def main():
-    run_chain_sql()
+    model = "gpt-4-1106-preview"
+
+    query = (
+        "I want to retrieve the customer with the highest revenue from the database."
+    )
+
+    output = run_chain_sql(query, model)
+
+    print(output)
+
+
+if __name__ == "__main__":
+    main()

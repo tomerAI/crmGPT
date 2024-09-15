@@ -4,12 +4,12 @@ from langchain_core.messages import HumanMessage
 import functools
 
 class PostgreSQLChain:
-    def __init__(self):
+    def __init__(self, model):
         # Create an instance of SQLTeam
-        self.agents = SQLTeam(llm_model="gpt-4-1106-preview")
+        self.agents = SQLTeam(model=model)
         self.sql_graph = StateGraph(SQLTeamState)  # Initialize the StateGraph
 
-    def build_graph(self, system_prompt, members):
+    def build_graph(self, members):
         """Build the PostgreSQL query execution graph by adding nodes and edges."""
 
         # Add nodes using agent methods
