@@ -91,12 +91,7 @@ class HelperUtilities:
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", system_prompt),
-                MessagesPlaceholder(variable_name="messages"),
-                (
-                    "system",
-                    "Given the conversation above, who should act next?"
-                    " Or should we FINISH? Select one of: {options}",
-                ),
+                MessagesPlaceholder(variable_name="messages")
             ]
         ).partial(options=str(options), team_members=", ".join(members))
 

@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 import psycopg2  # or any other DB connector for your DB
 from dotenv import load_dotenv
 import os
-from backend_py.teams.team_sql import SQLTeam
 
 # set API keys for OpenAI (the LLM we will use) and Tavily (the search tool we will use)
 # Load environment variables from .env file
@@ -29,12 +28,13 @@ os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = "crmGPT"
 
 
-from backend_py.graphs.graph_sql import PostgreSQLChain
+from graphs.graph import PostgreSQLChain
 
 def run_chain_sql(query, model):
     chain_sql = PostgreSQLChain(model)
 
-    members = ["SQLCreationAgent", "SQLReviewAgent", "SQLExecutionAgent", "OutputFormattingAgent"]
+    members = ["SQLCreationAgent", "SQLReviewAgent", "SQLExecutionAgent", 
+               "OutputFormattingAgent"]
     chain_sql.build_graph(members)
 
     compiled_chain = chain_sql.compile_chain()
@@ -43,7 +43,6 @@ def run_chain_sql(query, model):
     output = chain_sql.enter_chain(query, compiled_chain, members)
 
     return output
-
 
 
 def main():
