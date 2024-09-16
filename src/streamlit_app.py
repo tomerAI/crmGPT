@@ -100,11 +100,14 @@ def main():
                 )
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+                st.error("Please check the input or the model configuration.")
+                st.error(f"Exception type: {type(e).__name__}")
+                #output = "An error occurred while processing your request."
+
 
         # Immediately display the agent's response
         with st.chat_message("assistant"):
             st.write(output)
-
 
 
 
