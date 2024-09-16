@@ -12,24 +12,25 @@ class DataRequirementTeam:
         self.llm = ChatOpenAI(model=model)
         self.utilities = HelperUtilities()
         self.tools = {
-            'metadata': fetch_metadata_as_yaml,
             'placeholder': placeholder_tool
         }
 
-    def data_user_input_agent(self):
+    def data_gather_information(self):
         """Creates an agent that captures the user's initial data request."""
         system_prompt = (
             """
-            Your primary task is to capture the user's initial data request or question and ensure a clear understanding of their data needs.
+            Your job is to get data information from a user about what type of prompt template they want to create.
 
-            Instructions:
-            1. **Capture High-Level Needs**: Begin by understanding the user's needs at a high level. Identify the main objective they are trying to achieve with their data request.
-            2. **Request Specifics**: If you cannot identify specific data needs from the user's input, ask direct questions to gather more details. For example, you could ask: "Could you please specify the data you need or the problem you're trying to solve with this data?"
-            3. **Confirm Understanding**: After capturing the user's input, confirm your understanding by restating their request in your own words and asking for their confirmation. This ensures that you have accurately captured their needs.
-            4. **Handle Ambiguity**: If the user's request is unclear or ambiguous, ask clarifying questions to gather more context before proceeding. Avoid making assumptions about the user's needs.
-            5. **Prepare for Next Steps**: Ensure that the captured data request is structured and detailed enough to be passed on to the next agent in the workflow.
+            You should get the following information from them:
 
-            Your goal is to accurately capture the user's data needs and ensure that the information is clear and complete before passing it on to the next stage of the data requirement gathering process.
+            - What the data objective of the prompt is
+            - What variables will be passed into the prompt template
+            - Any constraints for what the output should NOT do
+            - Any requirements that the output MUST adhere to
+
+            If you are not able to discern this info, ask them to clarify! Do not attempt to wildly guess.
+
+            After you are able to discern all the information, call the relevant tool.
             """
         )
         data_user_input_agent = self.utilities.create_agent(
@@ -39,47 +40,22 @@ class DataRequirementTeam:
         )
         return functools.partial(self.utilities.agent_node, agent=data_user_input_agent, name="data_user_input")
 
-    def data_clarification_agent(self):
-        """Creates an agent that asks clarifying questions to the user to gather more details about their data needs."""
+    def data_prompt_generator(self):
+        """Creates an agent that creates a prompt template based on the user's data requirements."""
         system_prompt = (
             """
-            You are the data_clarification agent. Your task is to ask the user targeted questions to clarify their data needs.
-            Focus on gathering specific information such as:
-            - Time periods of interest
-            - Data dimensions (e.g., location, product, customer segment)
-            - Filters or conditions to apply
-            - Metrics or KPIs of interest
-            - Data granularity (e.g., daily, weekly, monthly)
-            - Desired output format (e.g., table, chart)
-            - Preferred data visualization type (e.g., bar chart, line graph)
-            - Any specific data exclusions
-            - Frequency of data updates needed
-            - Whether historical or real-time data is required
-            Ensure that your questions are concise and help the user articulate their needs clearly.
+            Based on the following requirements, write a good prompt template:
+
+            {reqs}
             """
         )
-        data_clarification_agent = self.utilities.create_agent(
+        data_user_input_agent = self.utilities.create_agent(
             self.llm,
             [self.tools['placeholder']],
             system_prompt
         )
-        return functools.partial(self.utilities.agent_node, agent=data_clarification_agent, name="data_clarification")
+        return functools.partial(self.utilities.agent_node, agent=data_user_input_agent, name="data_user_input")
 
-    def data_schema_mapping_agent(self):
-        """Creates an agent that maps the user's clarified needs to the database schema."""
-        system_prompt = (
-            """
-            You are the data_schema_mapping agent. Your task is to map the user's clarified data needs to the database schema.
-            Use the 'metadata' tool to fetch the database schema and ensure that the user's requirements align with the available data.
-            Identify the relevant tables, fields, and relationships that will be needed to construct the query.
-            """
-        )
-        data_schema_mapping_agent = self.utilities.create_agent(
-            self.llm,
-            [self.tools['metadata']],
-            system_prompt
-        )
-        return functools.partial(self.utilities.agent_node, agent=data_schema_mapping_agent, name="data_schema_mapping")
 
     def data_supervisor(self, members: List[str]):
         """Creates a supervisor agent that manages the data requirement gathering workflow."""
