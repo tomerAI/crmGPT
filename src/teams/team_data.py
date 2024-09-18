@@ -1,7 +1,7 @@
 import functools
 from typing import List, TypedDict, Annotated
 from langchain_core.messages import BaseMessage
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from utilities.helper import HelperUtilities
 from tools.tool_empty import placeholder_tool
 import operator
@@ -15,20 +15,20 @@ class DataRequirementTeam:
         }
 
     def data_gather_information(self):
-        """Creates an agent that captures the user's initial data request and stores it."""
+        """Creates an agent that captures the user's expectations for the data and stores it."""
         system_prompt_template = (
             """
-            Your job is to collect data requirements from the user to create a prompt template.
+            Your job is to collect the user's data requirements and expectations to create a prompt template.
 
             Here is the current state of the conversation:
             {chat_history}
 
             You should gather the following information:
 
-            - **Data Objective**: What is the goal or purpose of the data the user wants?
-            - **Variables**: What variables or parameters will be passed into the prompt template?
-            - **Constraints**: Any constraints or limitations that the output should NOT include.
-            - **Requirements**: Any specific requirements that the output MUST adhere to.
+            1. **Purpose of the Data**: Understand why the user needs the data. What decision or analysis will it support?
+            2. **Specific Data Needs**: Identify which specific data points the user is interested in (e.g., sales figures, customer demographics).
+            3. **Time Frame**: Determine if there is a specific time frame the user is interested in (e.g., last month, Q1 2024).
+            4. **Filters/Criteria**: Ask for any specific conditions that should be applied to the data (e.g., region, product category).
 
             Engage with the user to collect all necessary information. If any information is missing or unclear, ask the user for clarification.
 
@@ -37,10 +37,6 @@ class DataRequirementTeam:
             Do not proceed to generate the prompt; your role is only to collect and store the requirements.
             """
         )
-        def system_prompt(state):
-            # Access 'chat_history' from the state
-            data_requirements = state.get('chat_history', 'No chat history available.')
-            return system_prompt_template.format(data_requirements=data_requirements)
 
         data_gather_information_agent = self.utilities.create_agent(
             self.llm,
@@ -53,28 +49,25 @@ class DataRequirementTeam:
             name="data_gather_information"
         )
 
+
     def data_prompt_generator(self):
-        """Creates an agent that generates a prompt template based on the stored data requirements."""
+        """Creates an agent that generates a prompt based on the defined data requirements."""
         system_prompt_template = (
             """
-            Based on the following data requirements, write a clear and effective prompt template:
+            Based on the following data requirements, write a clear and effective prompt for a SQL Execution:
 
             {data_requirements}
 
             The prompt should:
 
             - Clearly address the data objective.
-            - Incorporate the variables appropriately.
+            - Incorporate the specific data needs.
             - Respect the constraints.
             - Adhere to the specified requirements.
 
-            Store the generated prompt in the `prompt_template` field in the state.
+            Store the generated prompt in the `generated_prompt` field in the state.
             """
         )
-        def system_prompt(state):
-            # Access 'data_requirements' from the state
-            data_requirements = state.get('data_requirements', 'No data requirements provided.')
-            return system_prompt_template.format(data_requirements=data_requirements)
 
         data_prompt_generator_agent = self.utilities.create_agent(
             self.llm,
@@ -91,17 +84,13 @@ class DataRequirementTeam:
         """Creates a supervisor agent that manages the data requirement gathering workflow."""
         system_prompt_template = (
             """
-            You are the supervisor managing the data requirement gathering workflow. Your primary responsibility is to oversee the agents and ensure that they perform their tasks correctly and in the proper sequence.
+            You are the supervisor managing the data requirement gathering workflow. 
+            Your role is to route the conversation either back to the user for additional input or to the next step in the process.
+            If any agent requests more information, use 'FINISH' to prompt the user.
+            If the latest input asks questions assume it is for the user and use 'FINISH' to prompt the user for the questions!
 
             Here is the current state of the conversation:
             {chat_history}
-
-            Instructions:
-
-            1. **Start with data_gather_information**: Begin by invoking `data_gather_information` to collect data requirements from the user.
-            2. **Proceed to data_prompt_generator**: Once the data requirements are collected and stored, proceed to `data_prompt_generator`.
-            3. **Transition to SQL Team**: After the prompt template is generated and stored in `prompt_template`, route the workflow to `sql_generation` in the SQL team.
-            4. **User Engagement**: If at any point information is missing or unclear, use `FINISH` to prompt the user for additional input.
 
             Here are your available options to route the conversation:
 
@@ -111,10 +100,6 @@ class DataRequirementTeam:
             - **FINISH**: Prompts the user for additional input.
             """
         )
-        def system_prompt(state):
-            # Access 'chat_history' from the state
-            chat_history = state.get('chat_history', 'No chat history available.')
-            return system_prompt_template.format(chat_history=chat_history)
 
         data_supervisor = self.utilities.create_team_supervisor(
             self.llm,

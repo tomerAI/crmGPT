@@ -1,7 +1,7 @@
 import functools
 from typing import List, TypedDict, Annotated
 from langchain.schema import BaseMessage
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from utilities.helper import HelperUtilities
 from tools.tool_empty import placeholder_tool
 from tools.tool_metadata import fetch_metadata_as_yaml
