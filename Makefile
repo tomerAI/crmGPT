@@ -2,18 +2,17 @@
 DOCKER_IMAGE_NAME=crm-gpt
 DOCKER_CONTAINER_NAME=crm-gpt-container
 
-# Build the Docker image
+# Build the Docker image using Docker Compose
 build:
-	docker build -t $(DOCKER_IMAGE_NAME) .
+	docker-compose build
 
-# Run the Docker container
+# Run the Docker container using Docker Compose
 run:
-	docker run -d -p 8501:8501 --name $(DOCKER_CONTAINER_NAME) $(DOCKER_IMAGE_NAME)
+	docker-compose up -d
 
-# Stop and remove the Docker container
+# Stop and remove the Docker containers using Docker Compose
 stop:
-	docker stop $(DOCKER_CONTAINER_NAME)
-	docker rm $(DOCKER_CONTAINER_NAME)
+	docker-compose down
 
 # Rebuild the Docker image and run the container
 rebuild: stop build run
