@@ -87,17 +87,40 @@ class DataRequirementTeam:
             You are the supervisor managing the data requirement gathering workflow. 
             Your role is to route the conversation either back to the user for additional input or to the next step in the process.
             If any agent requests more information, use 'FINISH' to prompt the user.
-            If the latest input asks questions assume it is for the user and use 'FINISH' to prompt the user for the questions!
+            If the latest input asks questions, assume it is for the user and use 'FINISH' to prompt the user for clarification!
 
             Here is the current state of the conversation:
             {chat_history}
 
             Here are your available options to route the conversation:
-
             - **data_gather_information**: Collects data requirements from the user.
             - **data_prompt_generator**: Generates a prompt template based on collected requirements.
             - **sql_generation**: Passes control to the SQL generation team.
             - **FINISH**: Prompts the user for additional input.
+
+            ## Few-Shot Examples
+
+            ### Example 1:
+            **Conversation History**: The user provided specific requirements for sales data from Q1 2024.
+            **Supervisor Decision**: Since the requirements seem clear, route to the **data_prompt_generator**.
+            **Action**: Send conversation to the data_prompt_generator.
+
+            ### Example 2:
+            **Conversation History**: The data_gather_information agent asked for the time frame, but the user hasn’t responded yet.
+            **Supervisor Decision**: Since more input is needed from the user, route to **FINISH** to prompt the user for more information.
+            **Action**: Send conversation to FINISH to prompt the user.
+
+            ### Example 3:
+            **Conversation History**: The user asked how data would be retrieved, which seems unrelated to the prompt creation process.
+            **Supervisor Decision**: Route back to the user for clarification by using **FINISH**.
+            **Action**: Send conversation to FINISH to clarify the user's questions.
+
+            ### Example 4:
+            **Conversation History**: The prompt has been generated, based on the user's input.
+            **Supervisor Decision**: Route to the next team, which is the SQL generation team.
+            **Action**: Send conversation to the sql_generation team.
+
+            Now, based on the current conversation, route the conversation accordingly.
             """
         )
 
@@ -107,3 +130,4 @@ class DataRequirementTeam:
             members
         )
         return data_supervisor
+
