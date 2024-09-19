@@ -1,5 +1,4 @@
 import os
-import psycopg2
 import yaml
 from dotenv import load_dotenv
 from langchain_core.tools import tool

@@ -1,29 +1,7 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Retrieve DB credentials from environment variables
-db_host = os.getenv("db_host")
-db_database = os.getenv("db_database")
-db_user = os.getenv("db_user")
-db_password = os.getenv("db_password")
-
-# Access the environment variables
-openai_api_key = os.getenv("OPENAI_API_KEY")
-langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
-hf_api_key = os.getenv("HF_API_KEY")
-
-# Set the API keys 
-os.environ["OPENAI_API_KEY"] = openai_api_key
-os.environ["LANGCHAIN_API_KEY"] = langchain_api_key
-os.environ['USER_AGENT'] = 'myagent'
-
-# Set API key for LangSmith tracing
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_PROJECT"] = "crmGPT"
+import configparser
 
 # Import your chain
 from graphs.graph import PostgreSQLChain

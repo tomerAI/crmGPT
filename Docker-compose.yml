@@ -1,0 +1,33 @@
+version: "3"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"  # Maps port 8501 of the container to port 8501 on the host
+    env_file:
+      - .env        # Loads environment variables from .env file
+    volumes:
+      - ./src:/app  # Mounts the src directory to the /app directory in the container
+    depends_on:
+      - db          # Ensures the database starts before the app
+    networks:
+      - app-network
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${db_database}
+      POSTGRES_USER: ${db_user}
+      POSTGRES_PASSWORD: ${db_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
+volumes:
+  postgres_data:
