@@ -43,7 +43,8 @@ class PostgreSQLChain:
         # Add nodes for DataRequirementTeam agents
         self.graph.add_node("data_gather_information", self.data_team.data_gather_information())
         self.graph.add_node("data_prompt_generator", self.data_team.data_prompt_generator())
-        self.graph.add_node("data_supervisor", self.data_team.data_supervisor(self.data_team_members))
+        self.graph.add_node("data_gather_supervisor", self.data_team.data_gather_supervisor(self.data_team_members))
+        self.graph.add_node("data_prompt_supervisor", self.data_team.data_prompt_supervisor(self.team_members))
 
         # Add nodes for SQLTeam agents
         self.graph.add_node("sql_generation", self.sql_team.sql_generation_agent())
@@ -52,23 +53,35 @@ class PostgreSQLChain:
         self.graph.add_node("sql_result_formatting", self.sql_team.sql_result_formatting_agent())
         self.graph.add_node("sql_supervisor", self.sql_team.sql_supervisor(self.sql_team_members))
 
+        ######### DATA REQUIREMENT TEAM #########
+        ######### Data Gathering workflow
         # Add conditional edges for dynamic routing
         self.graph.add_conditional_edges(
-            "data_supervisor",
+            "data_gather_supervisor",
             lambda x: x["next"],
             {
-                "data_gather_information": "data_gather_information",
-                "data_prompt_generator": "data_prompt_generator",
                 "FINISH": END,
+                "data_gather_information": "data_gather_information",
+                "data_prompt_generator": "data_prompt_generator"
+            }
+        )
+        
+        self.graph.add_edge(START, "data_gather_information")
+        self.graph.add_edge("data_gather_information", "data_gather_supervisor")
+
+        ######### Data Prompt Generation workflow
+        # Add conditional edges for dynamic routing
+        self.graph.add_conditional_edges(
+            "data_prompt_supervisor",
+            lambda x: x["next"],
+            {
+                "data_prompt_generator": "data_prompt_generator",
                 "sql_generation": "sql_generation"
             }
         )
+        self.graph.add_edge("data_prompt_generator", "data_prompt_supervisor")
 
-        # DataRequirementTeam workflow
-        self.graph.add_edge(START, "data_supervisor")
-        self.graph.add_edge("data_gather_information", "data_supervisor")
-        self.graph.add_edge("data_prompt_generator", "data_supervisor")
-
+        ######### SQL TEAM #########
         # SQLTeam workflow
         self.graph.add_edge("sql_generation", "sql_validation")
         self.graph.add_edge("sql_validation", "sql_execution")
@@ -92,7 +105,7 @@ class PostgreSQLChain:
             "agent_scratchpad": "",
             "intermediate_steps": [],
             "data_requirements": "",
-            "prompt_template": "",
+            "generated_prompt": "",
             "sql_query": "",
             "execution_results": None,
             "next": None
