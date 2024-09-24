@@ -112,9 +112,6 @@ class PostgreSQLChain:
             "next": None
         }
 
-        # Make a deep copy of input_data to prevent in-place mutations
-        input_data_copy = copy.deepcopy(input_data)
-
         # Execute the chain by invoking it with the input data
         chain_result = chain.invoke(input_data)
 
