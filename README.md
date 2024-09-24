@@ -18,3 +18,7 @@ https://arxiv.org/abs/2302.11382
 
 ## Separate teams
 - Separate data information team and prompt generator team
+
+## Create teams
+- Visualization team 
+perhaps several visualization teams
