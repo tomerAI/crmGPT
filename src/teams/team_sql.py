@@ -29,20 +29,25 @@ class SQLTeam:
         system_prompt_template = (
             """
             Your task is to create PostgreSQL queries based on the user's request and the metadata of the database. 
-            Based on the following prompt template, generate the appropriate SQL query:
+            Use your 'metadata' tool to gather metadata of the database.
+            Based on the following generated prompt and the metadata, generate the appropriate SQL query:
 
-            {prompt_template}
+            {generated_prompt}
+            
             Use your 'metadata' tool to gather metadata of the database and generate PostgreSQL queries that meet the user's requirements.
             Ensure the SQL code aligns with the PostgreSQL database schema and the user’s intent.
             Consider any PostgreSQL-specific functions or optimizations that could be applied.
+            
+            **Output Format:**
+
+            {{
+                "sql_query": "Your generated PostgreSQL here."
+            }}
+
+            **Do not include any code fences or extra text; output only the JSON object.**
             """
         )
 
-        def system_prompt(state):
-            # Access 'prompt_template' from the state
-            prompt_template = state.get('prompt_template', 'No prompt template provided.')
-            return system_prompt_template.format(prompt_template=prompt_template)
-        
         sql_generation_agent = self.utilities.create_agent(
             self.llm,
             [self.tools['metadata']],
@@ -54,45 +59,19 @@ class SQLTeam:
             name="sql_generation"
         )
 
-    def sql_validation_agent(self):
-        """Creates an agent that reviews a PostgreSQL query for syntax, security, and performance."""
-        system_prompt_template = (
-            """
-            Your task is to review the generated PostgreSQL query to ensure it is syntactically correct, secure, and efficient. 
-            Based on the following SQL code, validate the query:
-
-            {sql_query}
-            Use your expertise to identify any potential issues, such as syntax errors, security vulnerabilities, or performance bottlenecks.
-            Ensure the query adheres to best practices and standards for PostgreSQL database operations.
-            """
-        )
-        def system_prompt(state):
-            # Access 'sql_query' from the state
-            sql_query = state.get('sql_query', 'No SQL query provided.')
-            return system_prompt_template.format(sql_query=sql_query)
-
-        sql_validation_agent = self.utilities.create_agent(
-            self.llm,
-            [self.tools['placeholder']],
-            system_prompt_template
-        )
-        return functools.partial(
-            self.utilities.agent_node,
-            agent=sql_validation_agent,
-            name="sql_validation"
-        )
-
     def sql_execution_agent(self):
         """Creates an agent that executes a PostgreSQL query."""
         system_prompt_template = (
             """
             Your task is to execute the PostgreSQL query and return the results. 
             Ensure that the execution is efficient and that the connection to the PostgreSQL database is securely managed.
-            Handle any errors or exceptions that may arise during query execution.
+            
+            Use the following sql query to execute the PostgreSQL query:
+            {sql_query}
+            
+            Use your 'sql' tool to execute the query and return the results.
             """
         )
-        def system_prompt(state):
-            return system_prompt_template
 
         sql_execution_agent = self.utilities.create_agent(
             self.llm,
@@ -104,7 +83,7 @@ class SQLTeam:
             agent=sql_execution_agent,
             name="sql_execution"
         )
-
+    
     def sql_result_formatting_agent(self):
         """Creates an agent that summarizes the results of a PostgreSQL query execution."""
         system_prompt_template = (
@@ -113,11 +92,8 @@ class SQLTeam:
             Provide a concise summary that captures the key points of the data, including any notable trends, counts, or statistics.
             Ensure the summary is easy to understand and highlights the most relevant information for the user.
             Focus on PostgreSQL-specific data types and formatting when summarizing the results.
-            If the output doesn't meet the user's needs or is unclear, prompt the user for additional information to start a new query.
             """
         )
-        def system_prompt(state):
-            return system_prompt_template
         
         sql_result_formatting_agent = self.utilities.create_agent(
             self.llm,

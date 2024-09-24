@@ -98,7 +98,9 @@ def run_chain_sql(query, model, conversation_history):
     compiled_chain = chain_sql.compile_chain()
 
     # Enter the chain with the updated conversation history
-    output = chain_sql.enter_chain(query, compiled_chain, conversation_history)
+    output = chain_sql.enter_chain(query, 
+                                   compiled_chain, 
+                                   conversation_history)
     conversation_history.append({"role": "assistant", "content": output})
 
     return output, conversation_history

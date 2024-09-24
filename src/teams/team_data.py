@@ -35,9 +35,16 @@ class DataRequirementTeam:
 
             Engage with the user to collect all necessary information. If any information is missing or unclear, ask the user for clarification.
 
-            Once all information is collected, store it in the `data_requirements` field in the state.
+            **Once all information is collected**, output the collected information as a JSON object with the following structure:
 
-            Do not proceed to generate the prompt; your role is only to collect and store the requirements.
+            {{
+                "purpose_of_data": "user's response",
+                "specific_data_needs": "user's response",
+                "time_frame": "user's response",
+                "filters_criteria": "user's response"
+            }}
+
+            **Do not include any code fences or extra text; output only the JSON object.**
             """
         )
 
@@ -51,6 +58,8 @@ class DataRequirementTeam:
             agent=data_gather_information_agent,
             name="data_gather_information"
         )
+
+
 
 
     def data_prompt_generator(self):
@@ -68,7 +77,13 @@ class DataRequirementTeam:
             - Respect the constraints.
             - Adhere to the specified requirements.
 
-            Store the generated prompt in the `generated_prompt` field in the state.
+            **Output Format:**
+
+            {{
+                "generated_prompt": "Your generated prompt here."
+            }}
+
+            **Do not include any code fences or extra text; output only the JSON object.**
             """
         )
 
@@ -82,6 +97,7 @@ class DataRequirementTeam:
             agent=data_prompt_generator_agent,
             name="data_prompt_generator"
         )
+
     
     def data_prompt_human_proxy(self):
         """Creates a human proxy agent that optimizes the generated prompt based on human feedback."""
@@ -101,6 +117,8 @@ class DataRequirementTeam:
             """
             You are the supervisor for managing the data requirement gathering workflow.
             Your role is to route the conversation to the user, data_gather_information agent or data_prompt_generator agent
+            Here is the chat history:
+            {chat_history}
             
             Here are your available options to route the conversation:
             - **data_gather_information**: Collects data requirements from the user.
@@ -108,6 +126,10 @@ class DataRequirementTeam:
             - **FINISH**: Forwards the data_gather_information question to the user for additional input.
 
             Use the messages to route the conversation accordingly.
+
+            If the data requirements are clear, you can route the conversation to the data_prompt_generator agent to generate a prompt template.
+            Here are the data requirements collected:
+            {data_requirements}
 
             Here are some examples of messages:
             Example 1: 

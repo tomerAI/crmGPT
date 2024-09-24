@@ -2,8 +2,8 @@ from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
-
+from langchain_core.messages import HumanMessage, AIMessage
+import json
 
 class HelperUtilities:
     def __init__(self):
@@ -40,7 +40,7 @@ class HelperUtilities:
 
     def agent_node(self, state, agent: AgentExecutor, name: str, callback=None) -> dict:
         """
-        Invoke the agent with the current state and return the result as a message.
+        Invoke the agent with the current state, parse the output, update the state, and return the updated state.
         
         Args:
             state: The current state that the agent should use to make a decision.
@@ -49,15 +49,38 @@ class HelperUtilities:
             callback: Optional callback function to handle the result after invocation.
 
         Returns:
-            dict: A dictionary containing the result as a message.
+            dict: The updated state.
         """
+        # Invoke the agent with the current state
         result = agent.invoke(state)
-        
+        agent_output = result["output"]
+
+        # Attempt to parse the output as JSON and update the state
+        try:
+            output_data = json.loads(agent_output)
+            if name == "data_gather_information":
+                state['data_requirements'] = output_data
+            elif name == "data_prompt_generator":
+                state['generated_prompt'] = output_data.get('generated_prompt', '')
+            # Add more elif blocks for other agents as needed
+        except json.JSONDecodeError:
+            # Handle parsing error (e.g., log the error or store the raw output)
+            # For this example, we'll store the raw output in the state under a 'raw_outputs' key
+            state.setdefault('raw_outputs', {})[name] = agent_output
+
+        # Update the messages in the state
+        if 'messages' not in state:
+            state['messages'] = []
+        state['messages'].append(AIMessage(content=agent_output, name=name))
+
         # If a callback is provided, execute it
         if callback:
             callback(state)
-        
-        return {"messages": [HumanMessage(content=result["output"], name=name)]}
+
+        #return {"messages": [HumanMessage(content=result["output"], name=name)]}
+        # Return the updated state
+        return state
+    
 
 
     def create_team_supervisor(self, llm: ChatOpenAI, system_prompt: str, members: list) -> JsonOutputFunctionsParser:
