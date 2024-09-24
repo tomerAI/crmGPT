@@ -4,6 +4,7 @@ from langchain_core.messages import BaseMessage
 from langchain_openai import ChatOpenAI
 from utilities.helper import HelperUtilities
 from tools.tool_empty import placeholder_tool
+from tools.tool_metadata import fetch_metadata_as_yaml
 import operator
 
 class DataRequirementTeam:
@@ -11,7 +12,8 @@ class DataRequirementTeam:
         self.llm = ChatOpenAI(model=model)
         self.utilities = HelperUtilities()
         self.tools = {
-            'placeholder': placeholder_tool
+            'placeholder': placeholder_tool,
+            'metadata': fetch_metadata_as_yaml
         }
 
     def data_gather_information(self):
@@ -19,8 +21,9 @@ class DataRequirementTeam:
         system_prompt_template = (
             """
             Your job is to collect the user's data requirements and expectations to create a prompt template.
+            Use your tool, 'fetch_metadata_as_yaml', to gather an understanding of the database schema.
 
-            Here is the current state of the conversation:
+            Here is the user's requests:
             {chat_history}
 
             You should gather the following information:
@@ -32,15 +35,22 @@ class DataRequirementTeam:
 
             Engage with the user to collect all necessary information. If any information is missing or unclear, ask the user for clarification.
 
-            Once all information is collected, store it in the `data_requirements` field in the state.
+            **Once all information is collected**, output the collected information as a JSON object with the following structure:
 
-            Do not proceed to generate the prompt; your role is only to collect and store the requirements.
+            {{
+                "purpose_of_data": "user's response",
+                "specific_data_needs": "user's response",
+                "time_frame": "user's response",
+                "filters_criteria": "user's response"
+            }}
+
+            **Do not include any code fences or extra text; output only the JSON object.**
             """
         )
 
         data_gather_information_agent = self.utilities.create_agent(
             self.llm,
-            [self.tools['placeholder']],
+            [self.tools['metadata']],
             system_prompt_template
         )
         return functools.partial(
@@ -48,6 +58,8 @@ class DataRequirementTeam:
             agent=data_gather_information_agent,
             name="data_gather_information"
         )
+
+
 
 
     def data_prompt_generator(self):
@@ -65,7 +77,13 @@ class DataRequirementTeam:
             - Respect the constraints.
             - Adhere to the specified requirements.
 
-            Store the generated prompt in the `generated_prompt` field in the state.
+            **Output Format:**
+
+            {{
+                "generated_prompt": "Your generated prompt here."
+            }}
+
+            **Do not include any code fences or extra text; output only the JSON object.**
             """
         )
 
@@ -80,54 +98,83 @@ class DataRequirementTeam:
             name="data_prompt_generator"
         )
 
-    def data_supervisor(self, members: List[str]):
-        """Creates a supervisor agent that manages the data requirement gathering workflow."""
+    
+    def data_prompt_human_proxy(self):
+        """Creates a human proxy agent that optimizes the generated prompt based on human feedback."""
         system_prompt_template = (
             """
-            You are the supervisor managing the data requirement gathering workflow. 
-            Your role is to route the conversation either back to the user for additional input or to the next step in the process.
-            If any agent requests more information, use 'FINISH' to prompt the user.
-            If the latest input asks questions, assume it is for the user and use 'FINISH' to prompt the user for clarification!
+            You are a human proxy agent responsible for optimizing the generated prompt.
+            You optimize the prompt by using the following information:
+            Chat History: {chat_history}
+            Data Requirements: {data_requirements}
+            Generated Prompt: {generated_prompt}
+            """
+        )
 
-            Here is the current state of the conversation:
+    def data_gather_supervisor(self, members: List[str]):
+        """Creates a supervisor agent that oversees the data gathering process."""
+        system_prompt_template = (
+            """
+            You are the supervisor for managing the data requirement gathering workflow.
+            Your role is to route the conversation to the user, data_gather_information agent or data_prompt_generator agent
+            Here is the chat history:
             {chat_history}
-
+            
             Here are your available options to route the conversation:
             - **data_gather_information**: Collects data requirements from the user.
             - **data_prompt_generator**: Generates a prompt template based on collected requirements.
-            - **sql_generation**: Passes control to the SQL generation team.
-            - **FINISH**: Prompts the user for additional input.
+            - **FINISH**: Forwards the data_gather_information question to the user for additional input.
 
-            ## Few-Shot Examples
+            Use the messages to route the conversation accordingly.
 
-            ### Example 1:
-            **Conversation History**: The user provided specific requirements for sales data from Q1 2024.
-            **Supervisor Decision**: Since the requirements seem clear, route to the **data_prompt_generator**.
-            **Action**: Send conversation to the data_prompt_generator.
+            Here are the recorded data requirements collected:
+            {data_requirements}
+            If the data requirements are clear, you can route the conversation to the data_prompt_generator agent to generate a prompt template.
 
-            ### Example 2:
-            **Conversation History**: The data_gather_information agent asked for the time frame, but the user hasn’t responded yet.
-            **Supervisor Decision**: Since more input is needed from the user, route to **FINISH** to prompt the user for more information.
-            **Action**: Send conversation to FINISH to prompt the user.
+            Here are some examples of messages:
+            Example 1: 
+            Human: "I need data on customer demographics for the last quarter."
+            data_gather_information: "Could you please provide more details about the specific data points you are interested in?"
+            Output: **FINISH**
 
-            ### Example 3:
-            **Conversation History**: The user asked how data would be retrieved, which seems unrelated to the prompt creation process.
-            **Supervisor Decision**: Route back to the user for clarification by using **FINISH**.
-            **Action**: Send conversation to FINISH to clarify the user's questions.
-
-            ### Example 4:
-            **Conversation History**: The prompt has been generated, based on the user's input.
-            **Supervisor Decision**: Route to the next team, which is the SQL generation team.
-            **Action**: Send conversation to the sql_generation team.
+            Example 2:
+            Human: "Hello, how are you!"
+            data_gather_information: "Hello! How can I assist you with your data needs today?"
+            Output: **FINISH**
 
             Now, based on the current conversation, route the conversation accordingly.
             """
         )
 
-        data_supervisor = self.utilities.create_team_supervisor(
+        data_gather_supervisor = self.utilities.create_team_supervisor(
             self.llm,
             system_prompt_template,
             members
         )
-        return data_supervisor
+        return data_gather_supervisor
 
+
+    def data_prompt_supervisor(self, members: List[str]):
+        """Creates a supervisor agent that oversees the prompt generation process."""
+        system_prompt_template = (
+            """
+            You are the supervisor for managing the prompt generation workflow.
+            Your role is to route the conversation forward to the **sql_generation** team.
+
+            Here is the current state of the conversation:
+            {chat_history}
+
+            Here are your available options to route the conversation:
+            - **data_prompt_generator**: Generates a prompt template based on collected requirements.
+            - **sql_generation**: Passes control to the SQL generation team.
+
+            Now, based on the current conversation, route the conversation accordingly.
+            """
+        )
+
+        data_prompt_supervisor = self.utilities.create_team_supervisor(
+            self.llm,
+            system_prompt_template,
+            members
+        )
+        return data_prompt_supervisor
