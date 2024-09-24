@@ -71,15 +71,15 @@ class HelperUtilities:
         # Update the messages in the state
         if 'messages' not in state:
             state['messages'] = []
-        state['messages'].append(AIMessage(content=agent_output, name=name))
+        #state['messages'].append(AIMessage(content=agent_output, name=name))
 
         # If a callback is provided, execute it
         if callback:
             callback(state)
 
-        #return {"messages": [HumanMessage(content=result["output"], name=name)]}
+        return {"messages": [HumanMessage(content=result["output"], name=name)]}
         # Return the updated state
-        return state
+        #return state
     
 
 

@@ -97,10 +97,13 @@ def run_chain_sql(query, model, conversation_history):
 
     compiled_chain = chain_sql.compile_chain()
 
+    # Limit conversation history to the last N messages (e.g., last 4 messages)
+    limited_conversation_history = conversation_history[-4:]
+
     # Enter the chain with the updated conversation history
     output = chain_sql.enter_chain(query, 
                                    compiled_chain, 
-                                   conversation_history)
+                                   limited_conversation_history)
     conversation_history.append({"role": "assistant", "content": output})
 
     return output, conversation_history

@@ -5,6 +5,7 @@ from teams.team_sql import SQLTeam
 from teams.team_data import DataRequirementTeam
 import operator
 import functools
+import copy
 
 class CombinedTeamState(TypedDict):
     messages: Annotated[List[BaseMessage], operator.add]
@@ -92,11 +93,12 @@ class PostgreSQLChain:
         """Compile the combined chain from the constructed graph."""
         return self.graph.compile()
 
-    def enter_chain(self, message: str, chain, conversation_history: List[str]):
-        """Enter the compiled chain with the user's message and the chat history, and return the final summary."""
+    def enter_chain(self, message: str, chain, conversation_history: List[dict]):
         # Initialize messages with the user's input
         results = [HumanMessage(content=message)]
-        
+        print(f"Messages length: {len(results)}")
+        print(f"Conversation history length: {len(conversation_history)}")
+
         input_data = {
             "messages": results,
             "chat_history": conversation_history,
@@ -110,6 +112,9 @@ class PostgreSQLChain:
             "next": None
         }
 
+        # Make a deep copy of input_data to prevent in-place mutations
+        input_data_copy = copy.deepcopy(input_data)
+
         # Execute the chain by invoking it with the input data
         chain_result = chain.invoke(input_data)
 
@@ -120,3 +125,4 @@ class PostgreSQLChain:
             final_output = "No valid messages returned from the chain."
 
         return final_output
+

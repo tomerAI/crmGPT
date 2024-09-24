@@ -23,7 +23,7 @@ class DataRequirementTeam:
             Your job is to collect the user's data requirements and expectations to create a prompt template.
             Use your tool, 'fetch_metadata_as_yaml', to gather an understanding of the database schema.
 
-            Here is the current state of the conversation:
+            Here is the user's requests:
             {chat_history}
 
             You should gather the following information:
@@ -127,9 +127,9 @@ class DataRequirementTeam:
 
             Use the messages to route the conversation accordingly.
 
-            If the data requirements are clear, you can route the conversation to the data_prompt_generator agent to generate a prompt template.
-            Here are the data requirements collected:
+            Here are the recorded data requirements collected:
             {data_requirements}
+            If the data requirements are clear, you can route the conversation to the data_prompt_generator agent to generate a prompt template.
 
             Here are some examples of messages:
             Example 1: 
