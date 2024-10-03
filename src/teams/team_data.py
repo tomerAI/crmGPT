@@ -4,7 +4,7 @@ from langchain_core.messages import BaseMessage
 from langchain_openai import ChatOpenAI
 from utilities.helper import HelperUtilities
 from tools.tool_empty import placeholder_tool
-from tools.tool_metadata import fetch_metadata_as_yaml, fetch_metadata_as_json
+from tools.tool_metadata import fetch_metadata_as_json
 import operator
 
 class DataRequirementTeam:

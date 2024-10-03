@@ -4,7 +4,7 @@ from langchain.schema import BaseMessage
 from langchain_openai import ChatOpenAI
 from utilities.helper import HelperUtilities
 from tools.tool_empty import placeholder_tool
-from tools.tool_metadata import fetch_metadata_as_yaml
+from tools.tool_metadata import fetch_metadata_as_json
 from tools.tool_sql import execute_sql_query
 import operator
 
@@ -18,7 +18,6 @@ class SQLTeam:
         self.llm = ChatOpenAI(model=model)
         self.utilities = HelperUtilities()
         self.tools = {
-            'metadata': fetch_metadata_as_yaml,
             'sql': execute_sql_query,
             'placeholder': placeholder_tool
         }
@@ -50,7 +49,7 @@ class SQLTeam:
 
         sql_generation_agent = self.utilities.create_agent(
             self.llm,
-            [self.tools['metadata']],
+            [self.tools['placeholder']],
             system_prompt_template
         )
         return functools.partial(

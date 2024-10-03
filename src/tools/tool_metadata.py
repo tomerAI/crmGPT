@@ -1,29 +1,7 @@
 import json
-import yaml
 from langchain_core.tools import tool
-
-
-@tool
-def fetch_metadata_as_yaml() -> str:
-    """Reads the catalog.json file and returns its contents as a YAML string."""
-    try:
-        # Define the path to the JSON file
-        json_file_path = 'src/utilities/catalog.json'
-
-        # Load the JSON data
-        with open(json_file_path, 'r') as json_file:
-            data = json.load(json_file)
-
-        # Convert JSON data to YAML
-        yaml_data = yaml.dump(data, default_flow_style=False)
-
-        return yaml_data
-    except Exception as e:
-        return str(e)
-    
-
 import psycopg2
-import load_dotenv
+from dotenv import load_dotenv
 import os
 
 load_dotenv()
@@ -44,6 +22,7 @@ def get_db_connection():
     )
     return conn
 
+@tool
 def fetch_metadata_as_json():
     """
     Connects to the PostgreSQL database, fetches metadata from the metadata_table,
