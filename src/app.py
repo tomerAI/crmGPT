@@ -91,6 +91,7 @@ def main():
 
 
 def run_chain_sql(query, model, conversation_history):
+    """Run the SQL chain with the user's query and conversation history."""
     chain_sql = PostgreSQLChain(model)
 
     chain_sql.build_graph()

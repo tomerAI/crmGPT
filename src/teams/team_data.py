@@ -4,7 +4,7 @@ from langchain_core.messages import BaseMessage
 from langchain_openai import ChatOpenAI
 from utilities.helper import HelperUtilities
 from tools.tool_empty import placeholder_tool
-from tools.tool_metadata import fetch_metadata_as_yaml
+from tools.tool_metadata import fetch_metadata_as_yaml, fetch_metadata_as_json
 import operator
 
 class DataRequirementTeam:
@@ -13,7 +13,7 @@ class DataRequirementTeam:
         self.utilities = HelperUtilities()
         self.tools = {
             'placeholder': placeholder_tool,
-            'metadata': fetch_metadata_as_yaml
+            'metadata': fetch_metadata_as_json
         }
 
     def data_gather_information(self):
@@ -21,9 +21,33 @@ class DataRequirementTeam:
         system_prompt_template = (
             """
             Your job is to collect the user's data requirements and expectations to create a prompt template.
-            Use your tool, 'fetch_metadata_as_yaml', to gather an understanding of the database schema.
+            Use the function 'fetch_metadata_as_json' to gather metadata about the database.
+            Store the metadata in the 'metadata' list of dictionary, List[dict] for future reference.
+            Below is an example of a metadata structure:
+            {{
+            [
+                {
+                    "schema_name": "public",
+                    "table_name": "employees",
+                    "column_name": "employee_id",
+                    "data_type": "integer",
+                    "column_description": "Unique identifier for employees",
+                    "constraint_name": "employees_pkey",
+                    "constraint_type": "PRIMARY KEY"
+                },
+                {
+                    "schema_name": "public",
+                    "table_name": "employees",
+                    "column_name": "first_name",
+                    "data_type": "text",
+                    "column_description": "First name of the employee",
+                    "constraint_name": None,
+                    "constraint_type": None
+                }
+            ]
+            }}
 
-            Here is the user's requests:
+            Here is the chat history, use it to gather the data requirements:
             {chat_history}
 
             You should gather the following information:
@@ -35,7 +59,7 @@ class DataRequirementTeam:
 
             Engage with the user to collect all necessary information. If any information is missing or unclear, ask the user for clarification.
 
-            **Once all information is collected**, output the collected information as a JSON object with the following structure:
+            **Once all information is collected**, output the collected information as a dictionary in 'data_requirements' with the following structure:
 
             {{
                 "purpose_of_data": "user's response",
