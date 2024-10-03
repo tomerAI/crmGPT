@@ -23,12 +23,11 @@ class CombinedTeamState(TypedDict):
 
 
 class PostgreSQLChain:
-    def __init__(self, model, db_config):
+    def __init__(self, model):
         # Create instances of both teams
         self.sql_team = SQLTeam(model=model)
         self.data_team = DataRequirementTeam(model=model)
         self.graph = StateGraph(CombinedTeamState)  # Initialize the StateGraph with combined state
-        self.db_config = db_config
 
         # List of team members for supervisor agents
         self.data_team_members = [

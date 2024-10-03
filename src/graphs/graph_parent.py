@@ -8,11 +8,10 @@ from graph_prompt import PromptTeamSubgraph
 from graph_sql import SQLTeamSubgraph
 
 class ParentGraph:
-    def __init__(self, model, db_config):
+    def __init__(self, model):
         self.sql_team = SQLTeam(model=model)
         self.data_team = DataRequirementTeam(model=model)
-        self.db_config = db_config
-
+        
         # Initialize subgraphs
         self.data_subgraph = DataRequirementTeamSubgraph(self.data_team).compile_graph()
         self.prompt_subgraph = PromptTeamSubgraph(self.data_team).compile_graph()
