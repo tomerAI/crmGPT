@@ -4,8 +4,7 @@ from typing import List, TypedDict, Annotated, Any
 from teams.team_sql import SQLTeam
 from teams.team_data import DataRequirementTeam
 import operator
-import functools
-import copy
+
 
 class CombinedTeamState(TypedDict):
     messages: Annotated[List[BaseMessage], operator.add]
